@@ -17,12 +17,16 @@
 !
 ! --------------------------------------------------------------------
 
-#include "finclude/petscalldef.h"
+#include "finclude/petscdef.h"
+#include "finclude/petscvecdef.h"
+#include "finclude/petscmatdef.h"
+#include "finclude/petscdadef.h"
 
 ! --------------------------------------------------------------------
 
 module Bratu2D
 
+  use petsc
   use petscvec
   use petscmat
   use petscda
@@ -83,8 +87,10 @@ contains
        temp = dble(min(j-1,grd%my-j))*hy
        do i=grd%xs,grd%xe
           if (i==1 .or. j==1 .or. i==grd%mx .or. j==grd%my) then
+             ! boundary points
              x(i,j) = 0.0
           else
+             ! interior grid points
              x(i,j) = temp1*sqrt(min(dble(min(i-1,grd%mx-i)*hx),dble(temp)))
           end if
        end do
@@ -115,8 +121,10 @@ contains
     do j=grd%ys,grd%ye
        do i=grd%xs,grd%xe
           if (i==1 .or. j==1 .or. i==grd%mx .or. j==grd%my) then
+             ! boundary points
              f(i,j) = x(i,j) - 0.0
           else
+             ! interior grid points
              u = x(i,j) 
              uxx =  (two*u - x(i-1,j) - x(i+1,j)) * hydhx
              uyy =  (two*u - x(i,j-1) - x(i,j+1)) * hxdhy
@@ -149,33 +157,33 @@ contains
     hxdhy  = hx/hy
     hydhx  = hy/hx
 
-      do j=grd%ys,grd%ye
-         row = (j - grd%gys)*grd%gxm + grd%xs - grd%gxs - 1
-         do i=grd%xs,grd%xe
-            row = row + 1
-            if (i==1 .or. j==1 .or. i==grd%mx .or. j==grd%my) then
-               ! boundary points
-               col(1) = row
-               v(1)   = one
-               call MatSetValuesLocal(Jac,ione,row,ione,col,v,INSERT_VALUES,ierr)
-            else
-               ! interior grid points
-               v(1) = -hxdhy
-               v(2) = -hydhx
-               v(3) = two*(hydhx + hxdhy) - lambda*exp(x(i,j))*sc
-               v(4) = -hydhx
-               v(5) = -hxdhy
-               col(1) = row - grd%gxm
-               col(2) = row - 1
-               col(3) = row
-               col(4) = row + 1
-               col(5) = row + grd%gxm
-               call MatSetValuesLocal(Jac,ione,row,ifive,col,v,INSERT_VALUES,ierr)
-            end if
-         end do
-      end do
-
-    end subroutine JacobianLocal
+    do j=grd%ys,grd%ye
+       row = (j - grd%gys)*grd%gxm + grd%xs - grd%gxs - 1
+       do i=grd%xs,grd%xe
+          row = row + 1
+          if (i==1 .or. j==1 .or. i==grd%mx .or. j==grd%my) then
+             ! boundary points
+             col(1) = row
+             v(1)   = one
+             call MatSetValuesLocal(Jac,ione,row,ione,col,v,INSERT_VALUES,ierr)
+          else
+             ! interior grid points
+             v(1) = -hxdhy
+             v(2) = -hydhx
+             v(3) = two*(hydhx + hxdhy) - lambda*exp(x(i,j))*sc
+             v(4) = -hydhx
+             v(5) = -hxdhy
+             col(1) = row - grd%gxm
+             col(2) = row - 1
+             col(3) = row
+             col(4) = row + 1
+             col(5) = row + grd%gxm
+             call MatSetValuesLocal(Jac,ione,row,ifive,col,v,INSERT_VALUES,ierr)
+          end if
+       end do
+    end do
+    
+  end subroutine JacobianLocal
 
 end module Bratu2D
 
@@ -271,3 +279,9 @@ subroutine FormJacobian(da, X, J, lambda, ierr)
 end subroutine FormJacobian
 
 ! --------------------------------------------------------------------
+
+
+! Local Variables:
+! mode: f90
+! End:
+
