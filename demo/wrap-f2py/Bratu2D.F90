@@ -22,6 +22,9 @@
 #include "finclude/petscmatdef.h"
 #include "finclude/petscdadef.h"
 
+#undef  CHKERRQ
+#define CHKERRQ(n) if ((n) .ne. 0) return;
+
 ! --------------------------------------------------------------------
 
 module Bratu2D
@@ -48,13 +51,13 @@ contains
          &         grd%mx, grd%my, PETSC_NULL_INTEGER, &
          &         PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER, &
          &         PETSC_NULL_INTEGER,PETSC_NULL_INTEGER,PETSC_NULL_INTEGER, &
-         &         PETSC_NULL_INTEGER, ierr)
+         &         PETSC_NULL_INTEGER,ierr); CHKERRQ(ierr)
     call DAGetCorners(da, &
          &            grd%xs,grd%ys,PETSC_NULL_INTEGER, &
-         &            grd%xm,grd%ym,PETSC_NULL_INTEGER,ierr)
+         &            grd%xm,grd%ym,PETSC_NULL_INTEGER,ierr); CHKERRQ(ierr)
     call DAGetGhostCorners(da, &
          &                 grd%gxs,grd%gys,PETSC_NULL_INTEGER, &
-         &                 grd%gxm,grd%gym,PETSC_NULL_INTEGER,ierr)
+         &                 grd%gxm,grd%gym,PETSC_NULL_INTEGER,ierr); CHKERRQ(ierr)
     !
     grd%xs  = grd%xs+1
     grd%ys  = grd%ys+1
@@ -165,7 +168,7 @@ contains
              ! boundary points
              col(1) = row
              v(1)   = one
-             call MatSetValuesLocal(Jac,ione,row,ione,col,v,INSERT_VALUES,ierr)
+             call MatSetValuesLocal(Jac,ione,row,ione,col,v,INSERT_VALUES,ierr); CHKERRQ(ierr)
           else
              ! interior grid points
              v(1) = -hxdhy
@@ -178,7 +181,7 @@ contains
              col(3) = row
              col(4) = row + 1
              col(5) = row + grd%gxm
-             call MatSetValuesLocal(Jac,ione,row,ifive,col,v,INSERT_VALUES,ierr)
+             call MatSetValuesLocal(Jac,ione,row,ifive,col,v,INSERT_VALUES,ierr); CHKERRQ(ierr)
           end if
        end do
     end do
@@ -201,18 +204,18 @@ subroutine FormInitGuess(da, X, lambda, ierr)
   Vec                 :: localX
   PetscScalar,pointer :: xx(:)
   
-  call DAGetLocalVector(da,localX,ierr)
+  call DAGetLocalVector(da,localX,ierr); CHKERRQ(ierr)
 
-  call VecGetArrayF90(localX,xx,ierr)
+  call VecGetArrayF90(localX,xx,ierr); CHKERRQ(ierr)
 
-  call GetGridInfo(da,grd,ierr)
-  call InitGuessLocal(grd,xx,lambda,ierr)
+  call GetGridInfo(da,grd,ierr); CHKERRQ(ierr)
+  call InitGuessLocal(grd,xx,lambda,ierr); CHKERRQ(ierr)
 
-  call VecRestoreArrayF90(localX,xx,ierr)
+  call VecRestoreArrayF90(localX,xx,ierr); CHKERRQ(ierr)
 
-  call DALocalToGlobal(da,localX,INSERT_VALUES,X,ierr)
+  call DALocalToGlobal(da,localX,INSERT_VALUES,X,ierr); CHKERRQ(ierr)
 
-  call DARestoreLocalVector(da,localX,ierr)
+  call DARestoreLocalVector(da,localX,ierr); CHKERRQ(ierr)
   
 end subroutine FormInitGuess
 
@@ -231,20 +234,20 @@ subroutine FormFunction(da, X, F, lambda, ierr)
   PetscScalar,pointer :: xx(:)
   PetscScalar,pointer :: ff(:)
   
-  call DAGetLocalVector(da,localX,ierr)
-  call DAGlobalToLocalBegin(da,X,INSERT_VALUES,localX,ierr)                
-  call DAGlobalToLocalEnd(da,X,INSERT_VALUES,localX,ierr)
+  call DAGetLocalVector(da,localX,ierr); CHKERRQ(ierr)
+  call DAGlobalToLocalBegin(da,X,INSERT_VALUES,localX,ierr); CHKERRQ(ierr)
+  call DAGlobalToLocalEnd(da,X,INSERT_VALUES,localX,ierr); CHKERRQ(ierr)
 
-  call VecGetArrayF90(localX,xx,ierr)
-  call VecGetArrayF90(F,ff,ierr)
+  call VecGetArrayF90(localX,xx,ierr); CHKERRQ(ierr)
+  call VecGetArrayF90(F,ff,ierr); CHKERRQ(ierr)
   
-  call GetGridInfo(da,grd,ierr)
-  call FunctionLocal(grd,xx,ff,lambda,ierr)
+  call GetGridInfo(da,grd,ierr); CHKERRQ(ierr)
+  call FunctionLocal(grd,xx,ff,lambda,ierr); CHKERRQ(ierr)
 
-  call VecRestoreArrayF90(F,ff,ierr)
-  call VecRestoreArrayF90(localX,xx,ierr)
+  call VecRestoreArrayF90(F,ff,ierr); CHKERRQ(ierr)
+  call VecRestoreArrayF90(localX,xx,ierr); CHKERRQ(ierr)
 
-  call DARestoreLocalVector(da,localX,ierr)
+  call DARestoreLocalVector(da,localX,ierr); CHKERRQ(ierr)
   
 end subroutine FormFunction
 
@@ -262,19 +265,19 @@ subroutine FormJacobian(da, X, J, lambda, ierr)
   Vec                 :: localX
   PetscScalar,pointer :: xx(:)
 
-  call DAGetLocalVector(da,localX,ierr)
-  call DAGlobalToLocalBegin(da,X,INSERT_VALUES,localX,ierr)
-  call DAGlobalToLocalEnd(da,X,INSERT_VALUES,localX,ierr)
-  call VecGetArrayF90(localX,xx,ierr)
+  call DAGetLocalVector(da,localX,ierr); CHKERRQ(ierr)
+  call DAGlobalToLocalBegin(da,X,INSERT_VALUES,localX,ierr); CHKERRQ(ierr)
+  call DAGlobalToLocalEnd(da,X,INSERT_VALUES,localX,ierr); CHKERRQ(ierr)
+  call VecGetArrayF90(localX,xx,ierr); CHKERRQ(ierr)
 
-  call GetGridInfo(da,grd,ierr)
-  call JacobianLocal(grd,xx,J,lambda,ierr)
+  call GetGridInfo(da,grd,ierr); CHKERRQ(ierr)
+  call JacobianLocal(grd,xx,J,lambda,ierr); CHKERRQ(ierr)
 
-  call VecRestoreArrayF90(localX,xx,ierr)
-  call DARestoreLocalVector(da,localX,ierr)
+  call VecRestoreArrayF90(localX,xx,ierr); CHKERRQ(ierr)
+  call DARestoreLocalVector(da,localX,ierr); CHKERRQ(ierr)
 
-  call MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY,ierr)
-  call MatAssemblyEnd  (J,MAT_FINAL_ASSEMBLY,ierr)
+  call MatAssemblyBegin(J,MAT_FINAL_ASSEMBLY,ierr); CHKERRQ(ierr)
+  call MatAssemblyEnd  (J,MAT_FINAL_ASSEMBLY,ierr); CHKERRQ(ierr)
 
 end subroutine FormJacobian
 
